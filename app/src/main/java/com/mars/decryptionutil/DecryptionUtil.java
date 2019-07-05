@@ -1,9 +1,9 @@
 package com.mars.decryptionutil;
 
 import android.util.Base64;
-import android.util.Log;
 
-import java.io.UnsupportedEncodingException;
+
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,14 +20,17 @@ import javax.crypto.spec.SecretKeySpec;
  * 推播加解密
  */
 public class DecryptionUtil {
+    public static final String tag = DecryptionUtil.class.getSimpleName();
+
+
     /**
-     *
-     * @param data 解密內容
+     * ASE265解密 - RFC2829金鑰向量編成
+     * @param data 加密內容
      * @param salt salt
      * @param Password Password
-     * @return
+     * @return 解密內容
      */
-    public static String decrypt(String data, String salt, String Password ) {
+    public static String decrypt(String data, String salt, String Password) {
         Rfc2898DeriveBytes keyGenerator = null;
         String CIPHER_ALGORITHM = "AES/CBC/PKCS7Padding";
 
@@ -39,8 +42,7 @@ public class DecryptionUtil {
 
         byte[] bKey = keyGenerator.getBytes(32);
         byte[] bIv = keyGenerator.getBytes(16);
-        byte[] datadata ;
-
+        byte[] datadata;
 
         try {
             SecretKey secretKey = new SecretKeySpec(bKey, "AES");
@@ -50,26 +52,30 @@ public class DecryptionUtil {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, param);
 
             datadata = cipher.doFinal(Base64.decode(data, Base64.DEFAULT));
-            return new String(datadata, "UTF-8");
+            return new String(datadata, StandardCharsets.UTF_8);
 
         } catch (Exception e) {
-
             return null;
         }
     }
 
     //SHA1 加密实例
-    public static String getSHA(String val) {
+
+    /**
+     * SHA1 加密方法
+     * @param value 要加密的內容
+     * @return 加密字串
+     */
+    public static String getSHA(String value) {
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            byte[] results = sha1.digest(val.getBytes("UTF-8"));//加密
+            byte[] results = sha1.digest(value.getBytes(StandardCharsets.UTF_8));//加密
             StringBuilder stringBuilder = new StringBuilder();
             for (byte result : results) {
                 stringBuilder.append(Integer.toString((result & 0xff) + 0x100, 16).substring(1));
             }
             return stringBuilder.toString();
         } catch (Exception e) {
-
             return null;
         }
     }
@@ -116,10 +122,9 @@ public class DecryptionUtil {
          * @param iterations The number of iterations for the operation.
          * @throws NoSuchAlgorithmException     HmacSHA1 algorithm cannot be found.
          * @throws InvalidKeyException          Salt must be 8 bytes or more. -or- Password cannot be null.
-         * @throws UnsupportedEncodingException UTF-8 encoding is not supported.
          */
-        Rfc2898DeriveBytes(String password, byte[] salt, int iterations) throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
-            this(password.getBytes("UTF8"), salt, iterations);
+        Rfc2898DeriveBytes(String password, byte[] salt, int iterations) throws InvalidKeyException, NoSuchAlgorithmException {
+            this(password.getBytes(StandardCharsets.UTF_8), salt, iterations);
         }
 
         /**
@@ -129,9 +134,8 @@ public class DecryptionUtil {
          * @param salt     The key salt used to derive the key.
          * @throws NoSuchAlgorithmException     HmacSHA1 algorithm cannot be found.
          * @throws InvalidKeyException          Salt must be 8 bytes or more. -or- Password cannot be null.
-         * @throws UnsupportedEncodingException UTF-8 encoding is not supported.
          */
-        public Rfc2898DeriveBytes(String password, byte[] salt) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
+        public Rfc2898DeriveBytes(String password, byte[] salt) throws NoSuchAlgorithmException, InvalidKeyException {
             this(password, salt, 0x3e8);
         }
 
